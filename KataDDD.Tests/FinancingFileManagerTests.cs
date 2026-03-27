@@ -194,8 +194,10 @@ namespace KataDDD.Tests
         [Fact]
         public void RejectFile_ShouldChangeStatusToRefuseWithReason()
         {
-            _manager.CreateClient(1, "Client A");
-            int fileId = _manager.CreateFinancingFile(1, "tresorerie");
+            const int ClientId = 1;
+            _manager.CreateClient(ClientId, "Client A");
+            const string FileType = "tresorerie";
+            int fileId = _manager.CreateFinancingFile(1, FileType);
             _manager.AddNeedToFile(fileId, "tresorerie");
 
             int simId = _manager.CreateSimulation(fileId, 1, 150000, 120, 6.5m, 1500, false, true,
@@ -207,8 +209,8 @@ namespace KataDDD.Tests
             _manager.RejectFile(fileId, "Apport personnel insuffisant");
             var file = _manager.GetFile(fileId);
 
-            Assert.Equal("refuse", file.Status);
-            Assert.Equal("Apport personnel insuffisant", file.RejectionReason);
+            const string ExpectedRejectionReason = "Apport personnel insuffisant";
+           Assert.True(file.IsRejectedWith(ExpectedRejectionReason));
         }
 
         [Fact]

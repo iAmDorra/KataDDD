@@ -6,7 +6,7 @@
         public int ClientId { get; set; }
         public string Status { get; set; }
         public string FileType { get; set; }
-        public DateTime CreatedDate { get; set; }
+        private DateTime CreatedDate;
         public DateTime? SubmittedDate { get; set; }
         public DateTime? LastModifiedDate { get; set; }
         public List<Need> Needs { get; set; }
@@ -22,6 +22,7 @@
 
         public static FinancingFile Create(int clientId, string fileType, int idcounter)
         {
+
             return new FinancingFile
             {
                 Id = idcounter,
@@ -46,6 +47,16 @@
                 "cession_bail" => "leasing",
                 _ => throw new Exception($"Type de besoin invalide: {needType}")
             };
+        }
+
+        public bool IsRejectedWith(string expectedRejectionReason)
+        {
+            return IsRejected() && this.RejectionReason == expectedRejectionReason;
+        }
+
+        private bool IsRejected()
+        {
+            return this.Status == "refuse";
         }
     }
 }
