@@ -3,11 +3,11 @@
     public class FinancingFile
     {
         private int Id;
-        public int ClientId { get; set; }
+        private int ClientId;
         public string Status { get; set; }
         public string FileType { get; set; }
         private DateTime CreatedDate;
-        public DateTime? SubmittedDate { get; set; }
+        private DateTime? SubmittedDate;
         public DateTime? LastModifiedDate { get; set; }
         public List<Need> Needs { get; set; }
         public int? ResponsibleOfficer { get; set; }
@@ -34,6 +34,12 @@
                 ResponsibleOfficer = null
             };
         }
+
+        public bool HasSameClient(int clientId)
+        {
+            return this.ClientId == clientId;
+        }
+
 
         private static string DetermineFileType(string needType)
         {
@@ -66,6 +72,17 @@
             this.Status = "refuse";
             this.RejectionReason = reason;
             this.LastModifiedDate = DateTime.Now;
+        }
+
+        public void Submit(int responsibleOfficerId)
+        {
+            if (this.Needs.Count == 0) throw new Exception("Le dossier doit contenir au moins un besoin");
+            if (this.Needs.Any(n => n.SelectedSimulationId == null))
+                throw new Exception("Tous les besoins doivent avoir une simulation validée");
+
+            this.Status = "en_validation";
+            this.ResponsibleOfficer = responsibleOfficerId;
+            this.SubmittedDate = DateTime.Now;
         }
     }
 }

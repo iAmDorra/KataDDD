@@ -19,7 +19,7 @@ namespace KataDDD
 
         public int CreateFinancingFile(int clientId, string fileType)
         {
-            if (_clients.FirstOrDefault(c => c.Value.Id == clientId && c.Value.ActiveFiles.Count > 0 && c.Value.ActiveFiles.Any(f => f.Status == "montage_en_cours")).Value != null)
+            if(_files.Any(f=> f.HasSameClient(clientId) && f.Status == "montage_en_cours"))
             {
                 throw new Exception("Le client a déjà un dossier en montage en cours");
             }
@@ -27,7 +27,6 @@ namespace KataDDD
             FinancingFile file = FinancingFile.Create(clientId, fileType, _fileIdCounter++);
 
             _files.Add(file);
-            _clients[clientId].ActiveFiles.Add(file);
             return file.GetId();
         }
 
@@ -126,14 +125,7 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-
-            if (file.Needs.Count == 0) throw new Exception("Le dossier doit contenir au moins un besoin");
-            if (file.Needs.Any(n => n.SelectedSimulationId == null)) 
-                throw new Exception("Tous les besoins doivent avoir une simulation validée");
-
-            file.Status = "en_validation";
-            file.ResponsibleOfficer = responsibleOfficerId;
-            file.SubmittedDate = DateTime.Now;
+            file.Submit(responsibleOfficerId);
         }
 
         public void ApproveFile(int fileId)
@@ -168,9 +160,10 @@ namespace KataDDD
 
         public List<FinancingFile> GetClientFiles(int clientId)
         {
-            return _files.Where(f => f.ClientId == clientId).ToList();
+            return _files.Where(f => f.HasSameClient(clientId)).ToList();
         }
 
+        
         private string DetermineFileTypeFromNeed(string needType)
         {
             return needType switch
@@ -240,7 +233,7 @@ namespace KataDDD
 
         public int CountActiveFilesForClient(int clientId)
         {
-            return _files.Count(f => f.ClientId == clientId && f.Status != "abandonne" && f.Status != "accorde" && f.Status != "refuse");
+            return _files.Count(f => f.HasSameClient( clientId) && f.Status != "abandonne" && f.Status != "accorde" && f.Status != "refuse");
         }
 
         public string GetFileTypeLabel(int fileId)
