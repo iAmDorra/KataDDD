@@ -24,25 +24,18 @@ namespace KataDDD
                 throw new Exception("Le client a déjà un dossier en montage en cours");
             }
 
-            var file = new FinancingFile
-            {
-                Id = _fileIdCounter++,
-                ClientId = clientId,
-                CreatedDate = DateTime.Now,
-                Status = "montage_en_cours",
-                FileType = DetermineFileType(fileType),
-                Needs = new List<Need>(),
-                ResponsibleOfficer = null
-            };
+            FinancingFile file = FinancingFile.Create(clientId, fileType, _fileIdCounter++);
 
             _files.Add(file);
             _clients[clientId].ActiveFiles.Add(file);
-            return file.Id;
+            return file.GetId();
         }
+
+       
 
         public void AddNeedToFile(int fileId, string needType)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
             if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
 
@@ -72,7 +65,7 @@ namespace KataDDD
                                     decimal monthlyAmount, bool materialInsurance, bool personInsurance,
                                     List<string> guarantees, List<string> fees)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
             if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
 
@@ -103,7 +96,7 @@ namespace KataDDD
 
         public void ValidateSimulation(int fileId, int needId, int simulationId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
 
             var need = file.Needs.FirstOrDefault(n => n.Id == needId);
@@ -131,7 +124,7 @@ namespace KataDDD
 
         public void SubmitFileForValidation(int fileId, int responsibleOfficerId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
 
             if (file.Needs.Count == 0) throw new Exception("Le dossier doit contenir au moins un besoin");
@@ -145,7 +138,7 @@ namespace KataDDD
 
         public void ApproveFile(int fileId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
             if (file.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être approuvé");
 
@@ -155,7 +148,7 @@ namespace KataDDD
 
         public void RejectFile(int fileId, string reason)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
             if (file.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être rejeté");
 
@@ -166,7 +159,7 @@ namespace KataDDD
 
         public void AbandonFile(int fileId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
 
             file.Status = "abandonne";
@@ -175,26 +168,12 @@ namespace KataDDD
 
         public FinancingFile GetFile(int fileId)
         {
-            return _files.FirstOrDefault(f => f.Id == fileId);
+            return _files.FirstOrDefault(f => f.IsEqualTo(fileId));
         }
 
         public List<FinancingFile> GetClientFiles(int clientId)
         {
             return _files.Where(f => f.ClientId == clientId).ToList();
-        }
-
-        private string DetermineFileType(string needType)
-        {
-            return needType switch
-            {
-                "tresorerie" => "long_moyen_terme",
-                "achat_materiel" => "court_terme",
-                "investissement" => "credit_express",
-                "location_longue_duree" => "leasing",
-                "credit_bail" => "leasing",
-                "cession_bail" => "leasing",
-                _ => throw new Exception($"Type de besoin invalide: {needType}")
-            };
         }
 
         private string DetermineFileTypeFromNeed(string needType)
@@ -213,7 +192,7 @@ namespace KataDDD
 
         public decimal CalculateTotalMonthlyAmount(int fileId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return 0;
 
             decimal total = 0;
@@ -231,13 +210,13 @@ namespace KataDDD
 
         public string GetFileStatus(int fileId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             return file?.Status ?? "non_trouve";
         }
 
         public List<Simulation> GetAllSimulationsForNeed(int fileId, int needId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return new List<Simulation>();
 
             var need = file.Needs.FirstOrDefault(n => n.Id == needId);
@@ -247,7 +226,7 @@ namespace KataDDD
         public void ModifySimulation(int fileId, int needId, int simulationId, decimal amount, int duration, 
                                     decimal interestRate, decimal monthlyAmount)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
             if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
 
@@ -271,7 +250,7 @@ namespace KataDDD
 
         public string GetFileTypeLabel(int fileId)
         {
-            var file = _files.FirstOrDefault(f => f.Id == fileId);
+            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return "Inconnu";
 
             return file.FileType switch
