@@ -132,7 +132,7 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être approuvé");
+            if (file.Status != "locked") throw new Exception("Seul un dossier en validation peut être approuvé");
 
             file.Status = "accorde";
             file.LastModifiedDate = DateTime.Now;

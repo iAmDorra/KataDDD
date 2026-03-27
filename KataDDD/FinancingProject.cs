@@ -10,7 +10,7 @@
         private DateTime? SubmittedDate;
         public DateTime? LastModifiedDate { get; set; }
         public List<Need> Needs { get; set; }
-        public int? ResponsibleOfficer { get; set; }
+        private int? ResponsibleOfficer;
         private string RejectionReason;
 
         public bool IsEqualTo(int fileId)
@@ -67,7 +67,7 @@
 
         public void Reject(string reason)
         {
-            if (this.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être rejeté");
+            if (this.Status != "locked") throw new Exception("Seul un dossier en validation peut être rejeté");
 
             this.Status = "refuse";
             this.RejectionReason = reason;
@@ -80,9 +80,15 @@
             if (this.Needs.Any(n => n.SelectedSimulationId == null))
                 throw new Exception("Tous les besoins doivent avoir une simulation validée");
 
-            this.Status = "en_validation";
+            this.Status = "locked";
             this.ResponsibleOfficer = responsibleOfficerId;
             this.SubmittedDate = DateTime.Now;
+        }
+
+        public bool IsLockedBy(int responsibleOfficer)
+        {
+            return this.Status == "locked" &&
+                this.ResponsibleOfficer == responsibleOfficer;
         }
     }
 }

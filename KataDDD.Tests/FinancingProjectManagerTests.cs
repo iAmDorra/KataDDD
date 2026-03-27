@@ -169,8 +169,7 @@ namespace KataDDD.Tests
             _manager.SubmitFileForValidation(fileId, 42);
             var file = _manager.GetFile(fileId);
 
-            Assert.Equal("en_validation", file.Status);
-            Assert.Equal(42, file.ResponsibleOfficer);
+            Assert.True(file.IsLockedBy(42));
         }
 
         [Fact]
