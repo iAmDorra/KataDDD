@@ -28,7 +28,7 @@ namespace KataDDD.Tests
 
             var file = _manager.GetFile(fileId);
             Assert.NotNull(file);
-            Assert.Equal("montage_en_cours", file.Status);
+            Assert.True(file.IsInProgress());
         }
 
         [Fact]
@@ -119,7 +119,7 @@ namespace KataDDD.Tests
             _manager.ValidateSimulation(fileId, 1, sim1);
 
             var file = _manager.GetFile(fileId);
-            Assert.Equal("verrouille", file.Status);
+            Assert.True(file.IsLocked());
 
             var simulations = _manager.GetAllSimulationsForNeed(fileId, 1);
             Assert.Equal("validated", simulations.First(s => s.Id == sim1).Status);
@@ -173,7 +173,7 @@ namespace KataDDD.Tests
             _manager.ApproveFile(fileId);
             var file = _manager.GetFile(fileId);
 
-            Assert.Equal("accorde", file.Status);
+            Assert.True(file.IsAccepted());
         }
 
         [Fact]
@@ -208,7 +208,7 @@ namespace KataDDD.Tests
             _manager.AbandonFile(fileId);
             var file = _manager.GetFile(fileId);
 
-            Assert.Equal("abandonne", file.Status);
+            Assert.True(file.IsAborted());
         }
 
         [Fact]

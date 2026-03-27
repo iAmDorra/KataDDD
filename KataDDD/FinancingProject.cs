@@ -4,7 +4,7 @@
     {
         private int Id;
         private int ClientId;
-        public required string Status { get; set; }
+        private string Status;
         private string FileType;
         private DateTime CreatedDate;
         private DateTime? SubmittedDate;
@@ -190,7 +190,7 @@
             need.InterestRate = simulation.InterestRate;
 
             // Verrouiller le dossier après validation d'une simulation
-            this.Status = "verrouille";
+            this.Status = "locked";
             this.LastModifiedDate = DateTime.Now;
         }
 
@@ -199,7 +199,10 @@
         {
             return this.ClientId == clientId;
         }
-
+        public bool IsInProgress()
+        {
+            return this.Status == "montage_en_cours";
+        }
 
         private static string DetermineFileType(string needType)
         {
@@ -247,8 +250,23 @@
 
         public bool IsLockedBy(int responsibleOfficer)
         {
-            return this.Status == "locked" &&
+            return IsLocked() &&
                 this.ResponsibleOfficer == responsibleOfficer;
+        }
+
+        public bool IsLocked()
+        {
+            return this.Status == "locked";
+        }
+
+        public bool IsAccepted()
+        {
+            return this.Status == "accorde";
+        }
+
+        public bool IsAborted()
+        {
+            return this.Status == "abandonne";
         }
     }
 }

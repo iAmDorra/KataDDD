@@ -19,7 +19,7 @@ namespace KataDDD
 
         public int CreateFinancingFile(int clientId, string fileType)
         {
-            if(_files.Any(f=> f.HasSameClient(clientId) && f.Status == "montage_en_cours"))
+            if (_files.Any(f => f.HasSameClient(clientId) && f.IsInProgress()))
             {
                 throw new Exception("Le client a déjà un dossier en montage en cours");
             }
@@ -30,7 +30,8 @@ namespace KataDDD
             return file.GetId();
         }
 
-       
+      
+
 
         public void AddNeedToFile(int fileId, string needType)
         {
@@ -105,13 +106,6 @@ namespace KataDDD
             return file.CalculateTotalMonthlyAmount();
         }
 
-        
-        public string GetFileStatus(int fileId)
-        {
-            var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
-            return file?.Status ?? "non_trouve";
-        }
-
         public List<Simulation> GetAllSimulationsForNeed(int fileId, int needId)
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
@@ -129,7 +123,7 @@ namespace KataDDD
 
         public int CountActiveFilesForClient(int clientId)
         {
-            return _files.Count(f => f.HasSameClient( clientId) && f.Status != "abandonne" && f.Status != "accorde" && f.Status != "refuse");
+            return _files.Count(f => f.HasSameClient( clientId) && (f.IsInProgress() || f.IsLocked()));
         }
 
         public string GetFileTypeLabel(int fileId)
