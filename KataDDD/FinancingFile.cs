@@ -58,5 +58,14 @@
         {
             return this.Status == "refuse";
         }
+
+        public void Reject(string reason)
+        {
+            if (this.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être rejeté");
+
+            this.Status = "refuse";
+            this.RejectionReason = reason;
+            this.LastModifiedDate = DateTime.Now;
+        }
     }
 }

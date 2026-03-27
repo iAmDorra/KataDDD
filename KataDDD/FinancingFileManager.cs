@@ -149,12 +149,7 @@ namespace KataDDD
         public void RejectFile(int fileId, string reason)
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
-            if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "en_validation") throw new Exception("Seul un dossier en validation peut être rejeté");
-
-            file.Status = "refuse";
-            file.RejectionReason = reason;
-            file.LastModifiedDate = DateTime.Now;
+            file.Reject(reason);
         }
 
         public void AbandonFile(int fileId)
