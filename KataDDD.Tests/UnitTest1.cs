@@ -1,4 +1,7 @@
-﻿namespace KataDDD.Tests
+﻿using KataDDD;
+using Xunit;
+
+namespace KataDDD.Tests
 {
     public class FinancingFileManagerTests
     {
@@ -35,7 +38,8 @@
             _manager.CreateClient(1, "Client A");
             _manager.CreateFinancingFile(1, "tresorerie");
 
-            var ex = Assert.Throws<Exception>(() => _manager.CreateFinancingFile(1, "investissement"));
+            void Action() => _manager.CreateFinancingFile(1, "investissement");
+            var ex = Assert.Throws<Exception>((Action)Action);
             Assert.NotNull(ex);
         }
 
@@ -64,7 +68,8 @@
                                                    new List<string> { "frais_dossier" });
             _manager.ValidateSimulation(fileId, 1, simId);
 
-            var ex = Assert.Throws<Exception>(() => _manager.AddNeedToFile(fileId, "achat_materiel"));
+            void Action() => _manager.AddNeedToFile(fileId, "achat_materiel");
+            var ex = Assert.Throws<Exception>((Action)Action);
             Assert.NotNull(ex);
         }
 
@@ -110,8 +115,8 @@
             _manager.CreateSimulation(fileId, 1, 50000, 48, 5.2m, 1100, false, true, new List<string>(), new List<string>());
             _manager.CreateSimulation(fileId, 1, 50000, 60, 4.9m, 900, false, true, new List<string>(), new List<string>());
 
-            var ex = Assert.Throws<Exception>(() => 
-                _manager.CreateSimulation(fileId, 1, 50000, 72, 4.8m, 800, false, true, new List<string>(), new List<string>()));
+            void Action() => _manager.CreateSimulation(fileId, 1, 50000, 72, 4.8m, 800, false, true, new List<string>(), new List<string>());
+            var ex = Assert.Throws<Exception>((Action)Action);
             Assert.NotNull(ex);
         }
 
@@ -142,7 +147,7 @@
             int fileId = _manager.CreateFinancingFile(1, "credit_bail");
             _manager.AddNeedToFile(fileId, "credit_bail");
 
-            int simId = _manager.CreateSimulation(fileId, 1, 50000, 60, 5.5m, 950, true, false, 
+            int simId = _manager.CreateSimulation(fileId, 1, 50000, 60, 5.5m, 950, true, false,
                                                    new List<string> { "garantie_bailloriste" }, new List<string>());
             _manager.ValidateSimulation(fileId, 1, simId);
 
@@ -172,7 +177,7 @@
         public void ApproveFile_ShouldChangeStatusToAccorde()
         {
             _manager.CreateClient(1, "Client A");
-            int fileId = _manager.CreateFinancingFile(1, "credit_express");
+            int fileId = _manager.CreateFinancingFile(1, "investissement");
             _manager.AddNeedToFile(fileId, "investissement");
 
             int simId = _manager.CreateSimulation(fileId, 1, 50000, 36, 5.0m, 1450, false, false,
@@ -190,11 +195,11 @@
         public void RejectFile_ShouldChangeStatusToRefuseWithReason()
         {
             _manager.CreateClient(1, "Client A");
-            int fileId = _manager.CreateFinancingFile(1, "long_moyen_terme");
+            int fileId = _manager.CreateFinancingFile(1, "tresorerie");
             _manager.AddNeedToFile(fileId, "tresorerie");
 
             int simId = _manager.CreateSimulation(fileId, 1, 150000, 120, 6.5m, 1500, false, true,
-                                                   new List<string> { "hypotheque", "pledge_mobilier" }, 
+                                                   new List<string> { "hypotheque", "pledge_mobilier" },
                                                    new List<string> { "frais_dossier", "frais_expertise" });
             _manager.ValidateSimulation(fileId, 1, simId);
             _manager.SubmitFileForValidation(fileId, 25);
@@ -210,7 +215,7 @@
         public void AbandonFile_ShouldChangeStatusToAbandonne()
         {
             _manager.CreateClient(1, "Client A");
-            int fileId = _manager.CreateFinancingFile(1, "leasing");
+            int fileId = _manager.CreateFinancingFile(1, "cession_bail");
             _manager.AddNeedToFile(fileId, "cession_bail");
 
             _manager.AbandonFile(fileId);
@@ -230,11 +235,17 @@
 
         [Fact]
         public void AddNeedToFile_ShouldAllowMaxFourNeeds()
-    {
-        [Fact]
-        public void Test1()
         {
+            _manager.CreateClient(1, "Client A");
+            int fileId = _manager.CreateFinancingFile(1, "credit_bail");
 
+            _manager.AddNeedToFile(fileId, "credit_bail");
+            _manager.AddNeedToFile(fileId, "cession_bail");
+            _manager.AddNeedToFile(fileId, "location_longue_duree");
+            _manager.AddNeedToFile(fileId, "credit_bail");
+
+            var file = _manager.GetFile(fileId);
+            Assert.Equal(4, file.Needs.Count);
         }
     }
 }
