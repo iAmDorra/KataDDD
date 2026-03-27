@@ -11,7 +11,7 @@
         public DateTime? LastModifiedDate { get; set; }
         public List<Need> Needs { get; set; }
         public int? ResponsibleOfficer { get; set; }
-        public string RejectionReason { get; set; }
+        private string RejectionReason;
 
         public bool IsEqualTo(int fileId)
         {
