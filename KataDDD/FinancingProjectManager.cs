@@ -36,61 +36,17 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
-
-            if (file.Needs.Count >= 4) throw new Exception("Maximum 4 besoins par dossier");
-
-            var mappedFileType = DetermineFileTypeFromNeed(needType);
-            if (file.FileType != mappedFileType && file.Needs.Count > 0)
-                throw new Exception($"Le type de besoin '{needType}' n'est pas compatible avec ce dossier");
-
-            var need = new Need
-            {
-                Id = _needIdCounter++,
-                Type = needType,
-                FileId = fileId,
-                Simulations = new List<Simulation>(),
-                SelectedSimulationId = null,
-                Amount = 0,
-                Duration = 0,
-                InterestRate = 0
-            };
-
-            file.Needs.Add(need);
-            file.FileType = mappedFileType;
+            file.AddNeed(fileId, needType, _needIdCounter++);
         }
 
+       
         public int CreateSimulation(int fileId, int needId, decimal amount, int duration, decimal interestRate, 
                                     decimal monthlyAmount, bool materialInsurance, bool personInsurance,
                                     List<string> guarantees, List<string> fees)
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
-
-            var need = file.Needs.FirstOrDefault(n => n.Id == needId);
-            if (need == null) throw new Exception("Besoin non trouvé");
-
-            if (need.Simulations.Count >= 3) throw new Exception("Maximum 3 simulations par besoin");
-
-            var simulation = new Simulation
-            {
-                Id = _simulationIdCounter++,
-                NeedId = needId,
-                CreatedDate = DateTime.Now,
-                InvestmentAmount = amount,
-                Duration = duration,
-                InterestRate = interestRate,
-                MonthlyAmount = monthlyAmount,
-                MaterialInsurance = materialInsurance,
-                PersonalInsurance = personInsurance,
-                Guarantees = guarantees,
-                Fees = fees,
-                Status = "pending"
-            };
-
-            need.Simulations.Add(simulation);
-            return simulation.Id;
+            return file.CreateSimulation(needId, amount, duration, interestRate, monthlyAmount, materialInsurance, personInsurance, guarantees, fees, _simulationIdCounter++);
         }
 
         public void ValidateSimulation(int fileId, int needId, int simulationId)
@@ -98,27 +54,7 @@ namespace KataDDD
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
 
-            var need = file.Needs.FirstOrDefault(n => n.Id == needId);
-            if (need == null) throw new Exception("Besoin non trouvé");
-
-            var simulation = need.Simulations.FirstOrDefault(s => s.Id == simulationId);
-            if (simulation == null) throw new Exception("Simulation non trouvée");
-
-            // Invalider les autres simulations du même besoin
-            foreach (var sim in need.Simulations.Where(s => s.Id != simulationId))
-            {
-                sim.Status = "rejected";
-            }
-
-            simulation.Status = "validated";
-            need.SelectedSimulationId = simulationId;
-            need.Amount = simulation.InvestmentAmount;
-            need.Duration = simulation.Duration;
-            need.InterestRate = simulation.InterestRate;
-
-            // Verrouiller le dossier après validation d'une simulation
-            file.Status = "verrouille";
-            file.LastModifiedDate = DateTime.Now;
+            file.ValidateSimulation(needId, simulationId);
         }
 
         public void SubmitFileForValidation(int fileId, int responsibleOfficerId)
@@ -132,11 +68,10 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "locked") throw new Exception("Seul un dossier en validation peut être approuvé");
-
-            file.Status = "accorde";
-            file.LastModifiedDate = DateTime.Now;
+            file.Approve();
         }
+
+       
 
         public void RejectFile(int fileId, string reason)
         {
@@ -149,8 +84,7 @@ namespace KataDDD
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
 
-            file.Status = "abandonne";
-            file.LastModifiedDate = DateTime.Now;
+            file.Abandonner();
         }
 
         public FinancingProject GetFile(int fileId)
@@ -163,39 +97,15 @@ namespace KataDDD
             return _files.Where(f => f.HasSameClient(clientId)).ToList();
         }
 
-        
-        private string DetermineFileTypeFromNeed(string needType)
-        {
-            return needType switch
-            {
-                "tresorerie" => "long_moyen_terme",
-                "achat_materiel" => "court_terme",
-                "investissement" => "credit_express",
-                "location_longue_duree" => "leasing",
-                "credit_bail" => "leasing",
-                "cession_bail" => "leasing",
-                _ => throw new Exception($"Type de besoin invalide: {needType}")
-            };
-        }
 
         public decimal CalculateTotalMonthlyAmount(int fileId)
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return 0;
-
-            decimal total = 0;
-            foreach (var need in file.Needs)
-            {
-                if (need.SelectedSimulationId.HasValue)
-                {
-                    var selectedSim = need.Simulations.FirstOrDefault(s => s.Id == need.SelectedSimulationId);
-                    if (selectedSim != null)
-                        total += selectedSim.MonthlyAmount;
-                }
-            }
-            return total;
+            return file.CalculateTotalMonthlyAmount();
         }
 
+        
         public string GetFileStatus(int fileId)
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
@@ -206,9 +116,7 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return new List<Simulation>();
-
-            var need = file.Needs.FirstOrDefault(n => n.Id == needId);
-            return need?.Simulations ?? new List<Simulation>();
+            return file.GetAllNeedSimulation(needId);
         }
 
         public void ModifySimulation(int fileId, int needId, int simulationId, decimal amount, int duration, 
@@ -216,19 +124,7 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) throw new Exception("Dossier non trouvé");
-            if (file.Status != "montage_en_cours") throw new Exception("Le dossier ne peut pas être modifié");
-
-            var need = file.Needs.FirstOrDefault(n => n.Id == needId);
-            if (need == null) throw new Exception("Besoin non trouvé");
-
-            var simulation = need.Simulations.FirstOrDefault(s => s.Id == simulationId);
-            if (simulation == null) throw new Exception("Simulation non trouvée");
-            if (simulation.Status != "pending") throw new Exception("Seules les simulations en attente peuvent être modifiées");
-
-            simulation.InvestmentAmount = amount;
-            simulation.Duration = duration;
-            simulation.InterestRate = interestRate;
-            simulation.MonthlyAmount = monthlyAmount;
+            file.ModifySimulation(needId, simulationId, amount, duration, interestRate, monthlyAmount);
         }
 
         public int CountActiveFilesForClient(int clientId)
@@ -240,15 +136,8 @@ namespace KataDDD
         {
             var file = _files.FirstOrDefault(f => f.IsEqualTo(fileId));
             if (file == null) return "Inconnu";
-
-            return file.FileType switch
-            {
-                "credit_express" => "Crédit Express",
-                "credit_court_terme" => "Crédit Court Terme",
-                "long_moyen_terme" => "Crédit Long et Moyen Terme",
-                "leasing" => "Leasing",
-                _ => "Inconnu"
-            };
+            return file.GetFileTypeLabel();
         }
+
     }
 }

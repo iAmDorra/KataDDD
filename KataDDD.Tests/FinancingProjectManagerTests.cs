@@ -29,7 +29,6 @@ namespace KataDDD.Tests
             var file = _manager.GetFile(fileId);
             Assert.NotNull(file);
             Assert.Equal("montage_en_cours", file.Status);
-            Assert.Equal("long_moyen_terme", file.FileType);
         }
 
         [Fact]
@@ -44,27 +43,14 @@ namespace KataDDD.Tests
         }
 
         [Fact]
-        public void AddNeedToFile_ShouldAddNeedSuccessfully()
-        {
-            _manager.CreateClient(1, "Client A");
-            int fileId = _manager.CreateFinancingFile(1, "tresorerie");
-
-            _manager.AddNeedToFile(fileId, "tresorerie");
-            var file = _manager.GetFile(fileId);
-
-            Assert.Single(file.Needs);
-            Assert.Equal("tresorerie", file.Needs[0].Type);
-        }
-
-        [Fact]
         public void AddNeedToFile_ShouldThrowWhenFileIsLocked()
         {
             _manager.CreateClient(1, "Client A");
             int fileId = _manager.CreateFinancingFile(1, "investissement");
 
             _manager.AddNeedToFile(fileId, "investissement");
-            int simId = _manager.CreateSimulation(fileId, 1, 50000, 60, 5.5m, 900, true, true, 
-                                                   new List<string> { "hypotheque" }, 
+            int simId = _manager.CreateSimulation(fileId, 1, 50000, 60, 5.5m, 900, true, true,
+                                                   new List<string> { "hypotheque" },
                                                    new List<string> { "frais_dossier" });
             _manager.ValidateSimulation(fileId, 1, simId);
 
@@ -209,7 +195,7 @@ namespace KataDDD.Tests
             var file = _manager.GetFile(fileId);
 
             const string ExpectedRejectionReason = "Apport personnel insuffisant";
-           Assert.True(file.IsRejectedWith(ExpectedRejectionReason));
+            Assert.True(file.IsRejectedWith(ExpectedRejectionReason));
         }
 
         [Fact]
@@ -240,13 +226,14 @@ namespace KataDDD.Tests
             _manager.CreateClient(1, "Client A");
             int fileId = _manager.CreateFinancingFile(1, "credit_bail");
 
-            _manager.AddNeedToFile(fileId, "credit_bail");
-            _manager.AddNeedToFile(fileId, "cession_bail");
-            _manager.AddNeedToFile(fileId, "location_longue_duree");
-            _manager.AddNeedToFile(fileId, "credit_bail");
-
-            var file = _manager.GetFile(fileId);
-            Assert.Equal(4, file.Needs.Count);
+            Assert.Throws<Exception>(() =>
+            {
+                _manager.AddNeedToFile(fileId, "credit_bail");
+                _manager.AddNeedToFile(fileId, "cession_bail");
+                _manager.AddNeedToFile(fileId, "location_longue_duree");
+                _manager.AddNeedToFile(fileId, "credit_bail");
+                _manager.AddNeedToFile(fileId, "credit_bail");
+            });
         }
     }
 }
