@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace KataDDD
 {
-    public class FinancingFileManager
+    public class FinancingProjectManager
     {
         private List<FinancingProject> _files = new();
         private Dictionary<int, Client> _clients = new();

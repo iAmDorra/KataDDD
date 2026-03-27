@@ -3,13 +3,13 @@ using Xunit;
 
 namespace KataDDD.Tests
 {
-    public class FinancingFileManagerTests
+    public class FinancingProjectManagerTests
     {
-        private FinancingFileManager _manager;
+        private FinancingProjectManager _manager;
 
-        public FinancingFileManagerTests()
+        public FinancingProjectManagerTests()
         {
-            _manager = new FinancingFileManager();
+            _manager = new FinancingProjectManager();
         }
 
         [Fact]
