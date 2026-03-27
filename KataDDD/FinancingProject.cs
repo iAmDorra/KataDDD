@@ -1,6 +1,6 @@
 ﻿namespace KataDDD
 {
-    public class FinancingFile
+    public class FinancingProject
     {
         private int Id;
         private int ClientId;
@@ -20,10 +20,10 @@
 
         public int GetId() { return this.Id; }
 
-        public static FinancingFile Create(int clientId, string fileType, int idcounter)
+        public static FinancingProject Create(int clientId, string fileType, int idcounter)
         {
 
-            return new FinancingFile
+            return new FinancingProject
             {
                 Id = idcounter,
                 ClientId = clientId,

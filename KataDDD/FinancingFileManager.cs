@@ -6,7 +6,7 @@ namespace KataDDD
 {
     public class FinancingFileManager
     {
-        private List<FinancingFile> _files = new();
+        private List<FinancingProject> _files = new();
         private Dictionary<int, Client> _clients = new();
         private int _fileIdCounter = 1;
         private int _needIdCounter = 1;
@@ -24,7 +24,7 @@ namespace KataDDD
                 throw new Exception("Le client a déjà un dossier en montage en cours");
             }
 
-            FinancingFile file = FinancingFile.Create(clientId, fileType, _fileIdCounter++);
+            FinancingProject file = FinancingProject.Create(clientId, fileType, _fileIdCounter++);
 
             _files.Add(file);
             return file.GetId();
@@ -153,12 +153,12 @@ namespace KataDDD
             file.LastModifiedDate = DateTime.Now;
         }
 
-        public FinancingFile GetFile(int fileId)
+        public FinancingProject GetFile(int fileId)
         {
             return _files.FirstOrDefault(f => f.IsEqualTo(fileId));
         }
 
-        public List<FinancingFile> GetClientFiles(int clientId)
+        public List<FinancingProject> GetClientFiles(int clientId)
         {
             return _files.Where(f => f.HasSameClient(clientId)).ToList();
         }
