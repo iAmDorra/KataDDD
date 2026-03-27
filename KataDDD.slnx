@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="Readme.md" />
+  </Folder>
+  <Project Path="KataDDD.Tests/KataDDD.Tests.csproj" />
+  <Project Path="KataDDD/KataDDD.csproj" />
+</Solution>
