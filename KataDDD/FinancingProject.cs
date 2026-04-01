@@ -1,5 +1,6 @@
 ﻿namespace KataDDD
 {
+
     public class FinancingProject
     {
         private int Id;
@@ -13,6 +14,10 @@
         private int? ResponsibleOfficer;
         private string? RejectionReason;
 
+        public void Accept(IVisitor visitor)
+        {
+            visitor.Visit(this.Id, this.ClientId);
+        }
         public bool IsEqualTo(int fileId)
         {
             return this.Id == fileId;

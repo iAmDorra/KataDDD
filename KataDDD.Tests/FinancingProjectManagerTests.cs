@@ -13,6 +13,15 @@ namespace KataDDD.Tests
         }
 
         [Fact]
+        public void Test()
+        {
+            var projet = FinancingProject.Create(1, "investissement", 1);
+            var dto = new ProjectMapper().ToDTO(projet);
+            Assert.Equal(projet.GetId(), dto.Id);
+
+        }
+
+        [Fact]
         public void CreateClient_ShouldAddClientSuccessfully()
         {
             _manager.CreateClient(1, "Client A");
@@ -236,4 +245,6 @@ namespace KataDDD.Tests
             });
         }
     }
+
+   
 }
